@@ -2,16 +2,16 @@ $(document).ready(function () {
     $(document).on("submit", ".ajax-Form", function (e) {
         e.preventDefault();
         var F = $(this);
-        var url = F.attr("action");
-        var type = F.attr("method") ? F.attr("method") : "post";
+        var options = {};
+        options.url = F.attr("action");
+        options.type = F.attr("method") ? F.attr("method") : "post";
         var enc = F.attr("enctype");
-        var contentType = "application/x-www-form-urlencoded; charset=UTF-8";
-        var processData = true;
         var formdata = new FormData();
+
         //var filenames = [];
         if (enc == "multipart/formdata" || enc == "multipart/form-data") {
-            contentType = false;
-            processData = false;
+            options.contentType = false;
+            options.processData = false;
             var file_input = F.find('input[type="file"]');
             $.each(file_input, function (index, element) {
                 var files = $(element)[0].files;
@@ -28,34 +28,34 @@ $(document).ready(function () {
         } else {
             formdata = F.serializeArray();
         }
-
-        $.ajax({
-            url: url,
-            data: formdata,
-            contentType: contentType,
-            processData: processData,
-            type: type,
-            beforeSend: function () {
-                clear_errors(F);
-                $("body").addClass("ajax-loading");
-            },
-            success: function (data) {
+        options.data = formdata;
+        options.dataType = 'jsonp';
+        options.beforeSend = function () {
+            clear_errors(F);
+            $("body").addClass("ajax-loading");
+        };
+        options.success = function (data) {
+            if (typeof data == "object") {
+                var R = data;
+            } else {
                 var R = JSON.parse(data);
-                if (R.completefn) {
-                    ACFn[R.completefn](F, R);
-                } else if (R.success) {
-
-                } else {
-                    display_errors(F, R);
-                }
-            },
-            error: function () {
-                alert("Server Error! Try again later");
-            },
-            complete: function () {
-                $("body").removeClass("ajax-loading");
             }
-        });
+
+            if (R.completefn) {
+                ACFn[R.completefn](F, R);
+            } else if (R.success) {
+
+            } else {
+                display_errors(F, R);
+            }
+        };
+        options.error = function () {
+            alert("Server Error! Try again later");
+        };
+        options.complete = function () {
+            $("body").removeClass("ajax-loading");
+        };
+        $.ajax(options);
     });
 
     $("body").on("click", ".ajax-Link", function (e) {
@@ -90,58 +90,61 @@ $(document).ready(function () {
 });
 
 function sendAjaxButton(F) {
-    var url = F.data("href") ? F.data("href") : (F.attr("href") ? F.attr("href") : "");
-    var method = F.data("method") ? F.data("method") : "GET";
-    var token = F.data("token");
-    $.ajax({
-        url: url,
-        method: method,
-        data: {
-            '_token': token
-        },
-        beforeSend: function () {
-            $("body").addClass("ajax-loading");
-        },
-        success: function (data) {
-            var R = JSON.parse(data);
-            if (R.completefn) {
-                ACFn[R.completefn](F, R);
-            } else if (R.success) {
-
-            } else {
-                display_errors(F, R);
-            }
-        },
-        error: function () {
-            alert("Server Error! Try again later");
-        },
-        complete: function () {
-            $("body").removeClass("ajax-loading");
+    var options = {};
+    options.url = F.data("href") ? F.data("href") : (F.attr("href") ? F.attr("href") : "");
+    options.method = F.data("method") ? F.data("method") : "GET";
+    var data_arr = F.data();
+    options.data = {};
+    $.each(data_arr, function (index, element) {
+        if (index.startsWith("form")) {
+            var key = index.substr(4);
+            options.data[key] = element;
         }
     });
+    options.beforeSend = function () {
+        $("body").addClass("ajax-loading");
+    };
+    options.success = function (data) {
+        var R = JSON.parse(data);
+        if (R.completefn) {
+            ACFn[R.completefn](F, R);
+        } else if (R.success) {
+
+        } else {
+            display_errors(F, R);
+        }
+    };
+    options.error = function () {
+        alert("Server Error! Try again later");
+    };
+    options.complete = function () {
+        $("body").removeClass("ajax-loading");
+    };
+    $.ajax(options);
 }
 
 function AjaxCompleteFunctions() {
     // other properties and functions...
 
     this.general_form = function (F, R) {
+        if (R.message) {
+            if (typeof (swal) === 'function') {
+                swal(
+                        R.messageTitle,
+                        R.messageDescription,
+                        R.messageType
+                        )
+            } else {
+                alert(R.messageTitle + '\n' + R.messageDescription);
+            }
+        }
         if (R.success) {
             if (R.form_reset == false) {
 
             } else if (F.hasClass("ajax-Form")) {
                 F[0].reset();
             }
-            if (R.message) {
-                if (typeof (swal) === 'function') {
-                    swal(
-                            R.messageTitle,
-                            R.messageDescription,
-                            R.messageType
-                            )
-                } else {
-                    alert(R.messageTitle + '\n' + R.messageDescription);
-                }
-            }
+
             if (R.page_reload) {
                 location.reload();
             }
