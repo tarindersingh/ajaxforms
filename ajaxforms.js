@@ -41,8 +41,8 @@ $(document).ready(function () {
                 var R = JSON.parse(data);
             }
 
-            if (R.completefn) {
-                ACFn[R.completefn](F, R);
+            if (R.callbackfn) {
+                ACFn[R.callbackfn](F, R);
             } else if (R.success) {
 
             } else {
@@ -106,8 +106,8 @@ function sendAjaxButton(F) {
     };
     options.success = function (data) {
         var R = JSON.parse(data);
-        if (R.completefn) {
-            ACFn[R.completefn](F, R);
+        if (R.callbackfn) {
+            ACFn[R.callbackfn](F, R);
         } else if (R.success) {
 
         } else {
@@ -123,7 +123,7 @@ function sendAjaxButton(F) {
     $.ajax(options);
 }
 
-function AjaxCompleteFunctions() {
+function AjaxCallbackFunctions() {
     // other properties and functions...
 
     this.general_form = function (F, R) {
@@ -157,7 +157,7 @@ function AjaxCompleteFunctions() {
     };
 }
 
-var ACFn = new AjaxCompleteFunctions();
+var ACFn = new AjaxCallbackFunctions();
 
 function display_errors(F, R) {
     if (R.form_errors) {

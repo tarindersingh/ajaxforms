@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Description of Ajax
  *
@@ -36,8 +35,8 @@ class Ajax {
         return $this->param('success', $value);
     }
 
-    public function oncomplete($value) {
-        return $this->param('completefn', $value);
+    public function callback($value = "general_form") {
+        return $this->param('callbackfn', $value);
     }
 
     public function form_reset($param = true) {
